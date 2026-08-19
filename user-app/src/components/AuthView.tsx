@@ -99,7 +99,7 @@ export default function AuthView({ onSuccess }: { onSuccess: () => void }) {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-white dark:bg-gray-900">
+    <div className="flex flex-col min-h-screen bg-[#EAF7FB] dark:bg-[#12333D]">
       <div className="p-4 flex items-center gap-3 border-b border-gray-100 dark:border-gray-800">
         <button onClick={() => setMode('intro')} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
           <ArrowRight className="w-5 h-5 text-gray-800 dark:text-white" />
