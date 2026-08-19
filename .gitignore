@@ -9,3 +9,7 @@ dist/
 .capgo/
 .capgo_key*
 capgo-private*.pem
+*.jks
+*.keystore
+**/keystore.properties
+**/signing-secrets.properties
