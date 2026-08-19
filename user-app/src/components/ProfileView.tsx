@@ -3,7 +3,7 @@ import { User, Phone, MapPin, Edit2, LogOut, Heart, Gift, MessageCircle, Info, H
 import { useAppContext } from '../shared/context/AppContext';
 
 export default function ProfileView({ onViewChange }: { onViewChange: (view: string) => void }) {
-  const { userProfile, updateUserProfile, logout, deleteAccount, wallet, walletTransactions, theme, toggleTheme, settings } = useAppContext();
+  const { userProfile, updateUserProfile, logout, deleteAccount, accountDeletionRequest, wallet, walletTransactions, theme, toggleTheme, settings } = useAppContext();
   
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -16,6 +16,10 @@ export default function ProfileView({ onViewChange }: { onViewChange: (view: str
   
   const [showSuccess, setShowSuccess] = useState(false);
   const [showWalletTransactions, setShowWalletTransactions] = useState(false);
+  const [deleteRequestMessage, setDeleteRequestMessage] = useState('');
+  const [deleteRequestError, setDeleteRequestError] = useState('');
+  const [isSubmittingDeletion, setIsSubmittingDeletion] = useState(false);
+  const deletionIsPending = accountDeletionRequest?.status === 'PENDING' || accountDeletionRequest?.status === 'APPROVED';
 
   useEffect(() => {
     if (!userProfile) return;
@@ -390,13 +394,23 @@ export default function ProfileView({ onViewChange }: { onViewChange: (view: str
         </div>
 
         {/* Danger Zone */}
+        {deleteRequestMessage && (
+          <div className="mt-6 flex items-center gap-2 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-bold text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-300">
+            <CheckCircle className="h-5 w-5 shrink-0" />
+            {deleteRequestMessage}
+          </div>
+        )}
+        {deleteRequestError && <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{deleteRequestError}</div>}
         <div className="bg-white dark:bg-gray-800 rounded-3xl p-2 shadow-sm border border-gray-100 dark:border-gray-700 mt-6">
-          <button onClick={() => setIsDeleteModalOpen(true)} className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 dark:text-red-400 transition-colors text-right">
+          <button disabled={deletionIsPending} onClick={() => setIsDeleteModalOpen(true)} className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 dark:text-red-400 transition-colors text-right disabled:cursor-not-allowed disabled:opacity-60">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-red-50 dark:bg-red-900/30 rounded-xl flex items-center justify-center">
                 <Trash2 className="w-5 h-5" />
               </div>
-              <h4 className="font-bold text-sm">حذف الحساب</h4>
+              <div>
+                <h4 className="font-bold text-sm">{deletionIsPending ? 'طلب حذف الحساب قيد المراجعة' : 'حذف الحساب'}</h4>
+                {deletionIsPending && <p className="mt-0.5 text-xs font-medium text-gray-500">بانتظار قرار الإدارة</p>}
+              </div>
             </div>
           </button>
           <div className="h-px bg-gray-50 dark:bg-gray-700/50 mx-4"></div>
@@ -425,9 +439,9 @@ export default function ProfileView({ onViewChange }: { onViewChange: (view: str
             </div>
             <h3 className="font-bold text-xl mb-2 text-gray-900 dark:text-white">حذف الحساب</h3>
             <p className="text-gray-500 dark:text-gray-400 text-sm mb-6 leading-relaxed">
-              هل أنت متأكد من رغبتك في حذف حسابك بشكل نهائي؟
+              هل تريد إرسال طلب حذف حسابك إلى الإدارة؟
               <br/>
-              <span className="block mt-2 text-xs font-bold text-red-500">سيتم تعطيل الحساب وحذف بيانات الدخول مع الاحتفاظ بسجلات الطلبات التاريخية.</span>
+              <span className="block mt-2 text-xs font-bold text-red-500">لن يُحذف الحساب الآن. سيتم التنفيذ فقط بعد موافقة الإدارة.</span>
             </p>
             <div className="flex gap-3">
               <button 
@@ -438,13 +452,24 @@ export default function ProfileView({ onViewChange }: { onViewChange: (view: str
               </button>
               <button 
                 onClick={async () => {
-                  setIsDeleteModalOpen(false);
-                  await deleteAccount();
-                  onViewChange('home');
+                  if (isSubmittingDeletion) return;
+                  setIsSubmittingDeletion(true);
+                  setDeleteRequestError('');
+                  try {
+                    await deleteAccount();
+                    setIsDeleteModalOpen(false);
+                    setDeleteRequestMessage('تم إرسال طلب حذف الحساب للإدارة');
+                  } catch {
+                    setDeleteRequestError('تعذر إرسال الطلب. تحقق من الاتصال وحاول مرة أخرى.');
+                    setIsDeleteModalOpen(false);
+                  } finally {
+                    setIsSubmittingDeletion(false);
+                  }
                 }} 
-                className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-colors shadow-sm"
+                disabled={isSubmittingDeletion}
+                className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-colors shadow-sm disabled:opacity-60"
               >
-                متابعة الحذف
+                {isSubmittingDeletion ? 'جارٍ الإرسال...' : 'إرسال الطلب'}
               </button>
             </div>
           </div>

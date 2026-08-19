@@ -9,6 +9,7 @@ interface AppContextType {
   products: any[]; categories: any[]; subCategories: any[]; orders: any[];
   userProfile: UserProfile; wallet: { balance: number; totalEarned: number }; walletTransactions: any[];
   gifts: any[]; giftRedemptions: any[]; favorites: string[];
+  accountDeletionRequest: { id: string; status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'COMPLETED'; requestedAt: number } | null;
   authState: AuthState; setAuthState: (state: AuthState) => void;
   login: (phone: string, password: string) => Promise<void>; register: (data: any) => Promise<void>;
   logout: () => Promise<void>; deleteAccount: () => Promise<void>;
@@ -42,11 +43,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const gifts = useQuery(api.gifts.list, {}) ?? [];
   const giftRedemptions = useQuery(api.gifts.mine, tokenHash ? { tokenHash } : 'skip') ?? [];
   const favorites = useQuery(api.favorites.list, tokenHash ? { tokenHash } : 'skip') ?? [];
+  const accountDeletionRequest = useQuery(api.accountDeletionRequests.mine, tokenHash ? { tokenHash } : 'skip') ?? null;
 
   const loginAction = useAction(api.authActions.login);
   const registerAction = useAction(api.authActions.register);
   const logoutMutation = useMutation(api.users.logout);
-  const deleteMutation = useMutation(api.users.deleteAccount);
+  const requestDeletionMutation = useMutation(api.accountDeletionRequests.request);
   const updateProfileMutation = useMutation(api.users.updateProfile);
   const favoriteMutation = useMutation(api.favorites.toggle);
   const redeemMutation = useMutation(api.gifts.redeem);
@@ -75,7 +77,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!tokenHash) throw new Error('UNAUTHENTICATED');
     await updateProfileMutation({ tokenHash, fullName: next.fullName, address: next.address, landmark: next.landmark, notes: next.notes ?? '' });
   };
-  const deleteAccount = async () => { if (tokenHash) await deleteMutation({ tokenHash, confirmation: 'DELETE' }); await logout(); };
+  const deleteAccount = async () => {
+    if (!tokenHash) throw new Error('UNAUTHENTICATED');
+    await requestDeletionMutation({ tokenHash });
+  };
   const toggleFavorite = async (productId: string) => {
     if (!tokenHash) throw new Error('UNAUTHENTICATED');
     return await favoriteMutation({ tokenHash, productId: productId as any });
@@ -102,11 +107,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const value = useMemo<AppContextType>(() => ({
     products, categories, subCategories, orders, userProfile: profile ?? emptyProfile,
     wallet: walletData?.wallet ?? { balance: 0, totalEarned: 0 }, walletTransactions: walletData?.transactions ?? [],
-    gifts, giftRedemptions, favorites, authState, setAuthState, login, register, logout, deleteAccount,
+    gifts, giftRedemptions, favorites, accountDeletionRequest, authState, setAuthState, login, register, logout, deleteAccount,
     updateUserProfile, toggleFavorite, redeemGift, placeOrder, theme,
     toggleTheme: () => setTheme((current) => current === 'light' ? 'dark' : 'light'),
     showAuthModal, setShowAuthModal, requireAuth, deliveryFee: settings?.deliveryFee ?? 0, settings,
-  }), [products, categories, subCategories, orders, profile, walletData, gifts, giftRedemptions, favorites, authState, theme, showAuthModal, settings, tokenHash]);
+  }), [products, categories, subCategories, orders, profile, walletData, gifts, giftRedemptions, favorites, accountDeletionRequest, authState, theme, showAuthModal, settings, tokenHash]);
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
 
