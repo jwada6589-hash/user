@@ -94,4 +94,5 @@ jobs:
           CAPGO_API_KEY: ${{ secrets.CAPGO_API_KEY }}
 
       - name: Record candidate version
-        run: echo "Staging bundle: $BUNDLE_VERSION" >> "$GITHUB_STEP_SUMMARY"
+        run: |
+          echo "Staging bundle: $BUNDLE_VERSION" >> "$GITHUB_STEP_SUMMARY"

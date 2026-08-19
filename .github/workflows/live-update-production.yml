@@ -43,6 +43,7 @@ jobs:
           BUNDLE_VERSION: ${{ inputs.bundle_version }}
 
       - name: Record promoted version
-        run: echo "Production bundle: $BUNDLE_VERSION" >> "$GITHUB_STEP_SUMMARY"
+        run: |
+          echo "Production bundle: $BUNDLE_VERSION" >> "$GITHUB_STEP_SUMMARY"
         env:
           BUNDLE_VERSION: ${{ inputs.bundle_version }}
