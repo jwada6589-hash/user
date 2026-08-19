@@ -1,0 +1,97 @@
+name: Publish User Live Update to Staging
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - user-app/src/**
+      - user-app/index.html
+      - user-app/public/**
+      - user-app/package.json
+      - package-lock.json
+      - .github/workflows/live-update-staging.yml
+  workflow_dispatch:
+    inputs:
+      test_marker:
+        description: Optional visible marker for a temporary USB-device OTA test
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: user-live-update-staging
+  cancel-in-progress: true
+
+jobs:
+  publish-staging:
+    runs-on: ubuntu-latest
+    environment: staging
+    env:
+      CAPGO_APP_ID: com.almurtada.market
+      BUNDLE_VERSION: 1.0.0-staging.${{ github.run_number }}.${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build user web bundle
+        run: npm run build:android:web
+        env:
+          VITE_CONVEX_URL: https://fiery-dachshund-744.convex.cloud
+          VITE_OTA_TEST_MARKER: ${{ inputs.test_marker }}
+
+      - name: Upload only to staging
+        run: >-
+          npx @capgo/cli@latest bundle upload "$CAPGO_APP_ID"
+          --apikey "$CAPGO_API_KEY"
+          --path user-app/dist
+          --channel staging
+          --self-assign
+          --bundle "$BUNDLE_VERSION"
+          --comment "$GITHUB_SHA"
+          --package-json user-app/package.json
+          --node-modules node_modules
+          --fail-on-incompatible
+          --delta
+        env:
+          CAPGO_API_KEY: ${{ secrets.CAPGO_API_KEY }}
+
+      - name: Lock staging to compatible Android development devices
+        run: >-
+          npx @capgo/cli@latest channel set staging "$CAPGO_APP_ID"
+          --apikey "$CAPGO_API_KEY"
+          --android
+          --device
+          --dev
+          --self-assign
+          --no-downgrade
+          --disable-auto-update major
+        env:
+          CAPGO_API_KEY: ${{ secrets.CAPGO_API_KEY }}
+
+      - name: Ensure production channel exists without publishing to it
+        shell: bash
+        run: |
+          npx @capgo/cli@latest channel add production "$CAPGO_APP_ID" --default --apikey "$CAPGO_API_KEY" || true
+          npx @capgo/cli@latest channel set production "$CAPGO_APP_ID" \
+            --state default \
+            --android \
+            --device \
+            --prod \
+            --no-dev \
+            --no-downgrade \
+            --disable-auto-update major \
+            --apikey "$CAPGO_API_KEY"
+        env:
+          CAPGO_API_KEY: ${{ secrets.CAPGO_API_KEY }}
+
+      - name: Record candidate version
+        run: echo "Staging bundle: $BUNDLE_VERSION" >> "$GITHUB_STEP_SUMMARY"

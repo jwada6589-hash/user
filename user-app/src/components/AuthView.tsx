@@ -3,6 +3,7 @@ import { User, Lock, Phone, MapPin, Navigation, ArrowRight } from 'lucide-react'
 import { useAppContext } from '../shared/context/AppContext';
 
 export default function AuthView({ onSuccess }: { onSuccess: () => void }) {
+  const otaTestMarker = import.meta.env.VITE_OTA_TEST_MARKER;
   const { setAuthState, login, register } = useAppContext();
   const [mode, setMode] = useState<'intro' | 'login' | 'register'>('intro');
   const [error, setError] = useState('');
@@ -56,6 +57,11 @@ export default function AuthView({ onSuccess }: { onSuccess: () => void }) {
           </div>
           <h1 className="text-2xl font-black text-gray-900 dark:text-white mb-2">مرحباً بك في أسواق</h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm mb-10">تسوق جميع احتياجاتك اليومية بسهولة</p>
+          {otaTestMarker && (
+            <p data-ota-test-marker className="mb-4 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">
+              {otaTestMarker}
+            </p>
+          )}
           
           <div className="w-full space-y-4 max-w-sm">
             <button 

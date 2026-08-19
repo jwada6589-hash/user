@@ -6,3 +6,6 @@ dist/
 !**/.env.android
 *.log
 .DS_Store
+.capgo/
+.capgo_key*
+capgo-private*.pem

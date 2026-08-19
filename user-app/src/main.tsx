@@ -4,6 +4,9 @@ import App from './App';
 import './index.css';
 import { AppProvider } from './shared/context/AppContext';
 import { ConvexProvider, ConvexReactClient } from 'convex/react';
+import { startLiveUpdateCheck } from './shared/liveUpdates';
+
+startLiveUpdateCheck();
 
 const convexUrl = import.meta.env.VITE_CONVEX_URL;
 

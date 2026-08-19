@@ -1,0 +1,48 @@
+name: Promote Tested User Live Update to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      bundle_version:
+        description: Exact bundle version already tested in staging
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: user-live-update-production
+  cancel-in-progress: false
+
+jobs:
+  promote-production:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      CAPGO_APP_ID: com.almurtada.market
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Promote the tested bundle only
+        run: >-
+          npx @capgo/cli@latest channel set production "$CAPGO_APP_ID"
+          --apikey "$CAPGO_API_KEY"
+          --bundle "$BUNDLE_VERSION"
+          --android
+          --device
+          --prod
+          --no-downgrade
+          --disable-auto-update major
+        env:
+          CAPGO_API_KEY: ${{ secrets.CAPGO_API_KEY }}
+          BUNDLE_VERSION: ${{ inputs.bundle_version }}
+
+      - name: Record promoted version
+        run: echo "Production bundle: $BUNDLE_VERSION" >> "$GITHUB_STEP_SUMMARY"
+        env:
+          BUNDLE_VERSION: ${{ inputs.bundle_version }}
