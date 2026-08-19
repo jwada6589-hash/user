@@ -37,13 +37,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const categories = useQuery(api.catalog.categories, {}) ?? [];
   const subCategories = useQuery(api.catalog.subcategories, {}) ?? [];
   const settings = useQuery(api.settings.get, {});
-  const profile = useQuery(api.users.me, tokenHash ? { tokenHash } : 'skip');
-  const orders = useQuery(api.orders.mine, tokenHash ? { tokenHash } : 'skip') ?? [];
-  const walletData = useQuery(api.wallet.get, tokenHash ? { tokenHash } : 'skip');
+  const sessionIsValid = useQuery(api.users.sessionStatus, tokenHash ? { tokenHash } : 'skip');
+  const protectedArgs = tokenHash && sessionIsValid === true ? { tokenHash } : 'skip';
+  const profile = useQuery(api.users.me, protectedArgs);
+  const orders = useQuery(api.orders.mine, protectedArgs) ?? [];
+  const walletData = useQuery(api.wallet.get, protectedArgs);
   const gifts = useQuery(api.gifts.list, {}) ?? [];
-  const giftRedemptions = useQuery(api.gifts.mine, tokenHash ? { tokenHash } : 'skip') ?? [];
-  const favorites = useQuery(api.favorites.list, tokenHash ? { tokenHash } : 'skip') ?? [];
-  const accountDeletionRequest = useQuery(api.accountDeletionRequests.mine, tokenHash ? { tokenHash } : 'skip') ?? null;
+  const giftRedemptions = useQuery(api.gifts.mine, protectedArgs) ?? [];
+  const favorites = useQuery(api.favorites.list, protectedArgs) ?? [];
+  const accountDeletionRequest = useQuery(api.accountDeletionRequests.mine, protectedArgs) ?? null;
 
   const loginAction = useAction(api.authActions.login);
   const registerAction = useAction(api.authActions.register);
@@ -56,6 +58,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => { document.documentElement.classList.toggle('dark', theme === 'dark'); localStorage.setItem('appTheme', theme); }, [theme]);
   useEffect(() => { localStorage.setItem('authState', authState); }, [authState]);
+  useEffect(() => {
+    if (!tokenHash || sessionIsValid !== false) return;
+    localStorage.removeItem('userSessionHash');
+    localStorage.removeItem('userSessionExpiry');
+    setTokenHash('');
+    setAuthStateValue('logged_out');
+  }, [sessionIsValid, tokenHash]);
+  useEffect(() => {
+    if (accountDeletionRequest?.status !== 'APPROVED' && accountDeletionRequest?.status !== 'COMPLETED') return;
+    localStorage.removeItem('userSessionHash');
+    localStorage.removeItem('userSessionExpiry');
+    setTokenHash('');
+    setAuthStateValue('logged_out');
+  }, [accountDeletionRequest?.status]);
 
   const saveSession = (result: { tokenHash: string; expiresAt: number }) => {
     localStorage.setItem('userSessionHash', result.tokenHash); localStorage.setItem('userSessionExpiry', String(result.expiresAt));
