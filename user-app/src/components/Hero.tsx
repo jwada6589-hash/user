@@ -5,6 +5,7 @@ import { api } from '../../../convex/_generated/api';
 const slides = [
   {
     id: 1,
+    legacyKey: 'daily-offers',
     title: 'عروض يومية',
     subtitle: 'خصومات تصل إلى',
     discount: '30',
@@ -19,6 +20,7 @@ const slides = [
   },
   {
     id: 2,
+    legacyKey: 'fresh-produce',
     title: 'خضار وفواكه',
     subtitle: 'طازجة يومياً بخصم',
     discount: '20',
@@ -33,6 +35,7 @@ const slides = [
   },
   {
     id: 3,
+    legacyKey: 'personal-care',
     title: 'عناية شخصية',
     subtitle: 'وفر أكثر مع خصم',
     discount: '50',
@@ -47,6 +50,7 @@ const slides = [
   },
   {
     id: 4,
+    legacyKey: 'bakery',
     title: 'مخبوزات',
     subtitle: 'طعم لا يقاوم بخصم',
     discount: '15',
@@ -61,39 +65,76 @@ const slides = [
   }
 ];
 
+type LegacySlide = (typeof slides)[number];
+
+function LegacyBanner({ slide }: { slide: LegacySlide }) {
+  return (
+    <div className={`min-w-full h-full relative ${slide.bgColor}`}>
+      <div className={`absolute top-0 right-6 ${slide.buttonBg} text-gray-900 font-bold text-xs px-3 py-1.5 rounded-b-xl rounded-tl-xl transform rotate-[10deg] origin-top-right z-20 text-center leading-tight shadow-sm`}>
+        {slide.badge}
+      </div>
+      <div className="absolute inset-0 opacity-[0.15] pointer-events-none overflow-hidden">
+        <div className={`w-[300px] h-[300px] ${slide.glowColor} rounded-full blur-[80px] absolute -right-20 -top-20`} />
+      </div>
+      <div className="flex px-6 items-center relative z-10 w-full h-full">
+        <div className="w-[55%] flex flex-col justify-center h-full pb-2">
+          <h2 className="text-white text-[20px] font-black mb-0.5">{slide.title}</h2>
+          <p className="text-white/90 text-[10px] mb-0.5">{slide.subtitle}</p>
+          <div className={`flex items-start ${slide.accentColor} mb-2.5`}>
+            <span className="text-5xl font-black leading-none tracking-tighter">{slide.discount}</span>
+            <span className="text-2xl font-bold mt-1 ml-1">%</span>
+          </div>
+          <div><button className={`${slide.buttonBg} text-gray-900 font-bold py-1.5 px-6 rounded-full text-xs shadow-sm transition ${slide.buttonHover}`}>تسوق الآن</button></div>
+        </div>
+        <div className="w-[45%] relative h-[85%] flex justify-end items-center pb-2">
+          <div className={`absolute top-0 right-2 ${slide.leafColor} opacity-60 text-sm transform rotate-45`}>🍃</div>
+          <div className={`absolute bottom-2 left-2 ${slide.leafColor} opacity-60 text-sm transform -rotate-12`}>🍃</div>
+          <img src={slide.image} alt={slide.title} className="w-full h-full object-contain drop-shadow-xl" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Hero() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const managedBanners = useQuery(api.banners.active);
-  const uploadedBanners = managedBanners?.filter((banner) => banner.imageUrl) ?? [];
-  const slideCount = uploadedBanners.length || slides.length;
+  const activeBanners = managedBanners?.filter((banner) => banner.imageUrl || banner.legacyKey) ?? [];
+  const slideCount = managedBanners === undefined ? slides.length : activeBanners.length;
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % slideCount);
-    }, 4000);
+    if (slideCount <= 1) return;
+    const timer = setInterval(() => setCurrentIndex((prev) => (prev + 1) % slideCount), 4000);
     return () => clearInterval(timer);
   }, [slideCount]);
 
   useEffect(() => {
-    setCurrentIndex((index) => Math.min(index, slideCount - 1));
+    setCurrentIndex((index) => slideCount > 0 ? Math.min(index, slideCount - 1) : 0);
   }, [slideCount]);
 
-  if (uploadedBanners.length > 0) {
+  if (managedBanners !== undefined && activeBanners.length === 0) return null;
+
+  if (managedBanners !== undefined) {
     return (
       <div className="mx-4 mt-5 relative rounded-[1.5rem] overflow-hidden shadow-sm aspect-[2.35/1] bg-gray-100">
         <div
           className="flex w-full h-full transition-transform duration-700 ease-in-out"
           style={{ transform: `translateX(${currentIndex * 100}%)` }}
         >
-          {uploadedBanners.map((banner, index) => (
-            <div key={banner.id} className="min-w-full h-full">
-              <img src={banner.imageUrl!} alt={`بنر ${index + 1}`} className="w-full h-full object-cover" />
-            </div>
-          ))}
+          {activeBanners.map((banner, index) => {
+            const legacySlide = slides.find((slide) => slide.legacyKey === banner.legacyKey);
+            return legacySlide ? (
+              <LegacyBanner key={banner.id} slide={legacySlide} />
+            ) : (
+              <div key={banner.id} className="min-w-full h-full">
+                <img src={banner.imageUrl!} alt={`بنر ${index + 1}`} className="w-full h-full object-cover" />
+              </div>
+            );
+          })}
         </div>
-        {uploadedBanners.length > 1 && (
+        {activeBanners.length > 1 && (
           <div className="absolute bottom-2.5 left-0 right-0 flex justify-center gap-1.5 z-10">
-            {uploadedBanners.map((banner, index) => (
+            {activeBanners.map((banner, index) => (
               <button
                 type="button"
                 aria-label={`عرض البنر ${index + 1}`}
@@ -114,47 +155,7 @@ export default function Hero() {
         className="flex w-full h-full transition-transform duration-700 ease-in-out"
         style={{ transform: `translateX(${currentIndex * 100}%)` }}
       >
-        {slides.map((slide) => (
-          <div key={slide.id} className={`min-w-full h-full relative ${slide.bgColor}`}>
-            {/* Yellow Badge */}
-            <div className={`absolute top-0 right-6 ${slide.buttonBg} text-gray-900 font-bold text-xs px-3 py-1.5 rounded-b-xl rounded-tl-xl transform rotate-[10deg] origin-top-right z-20 text-center leading-tight shadow-sm`}>
-              {slide.badge}
-            </div>
-            
-            {/* Background decoration */}
-            <div className="absolute inset-0 opacity-[0.15] pointer-events-none overflow-hidden">
-               <div className={`w-[300px] h-[300px] ${slide.glowColor} rounded-full blur-[80px] absolute -right-20 -top-20`}></div>
-            </div>
-
-            <div className="flex px-6 items-center relative z-10 w-full h-full">
-              <div className="w-[55%] flex flex-col justify-center h-full pb-2">
-                <h2 className="text-white text-[20px] font-black mb-0.5">{slide.title}</h2>
-                <p className="text-white/90 text-[10px] mb-0.5">{slide.subtitle}</p>
-                <div className={`flex items-start ${slide.accentColor} mb-2.5`}>
-                  <span className="text-5xl font-black leading-none tracking-tighter">{slide.discount}</span>
-                  <span className="text-2xl font-bold mt-1 ml-1">%</span>
-                </div>
-                <div>
-                  <button className={`${slide.buttonBg} text-gray-900 font-bold py-1.5 px-6 rounded-full text-xs shadow-sm transition ${slide.buttonHover}`}>
-                    تسوق الآن
-                  </button>
-                </div>
-              </div>
-              
-              <div className="w-[45%] relative h-[85%] flex justify-end items-center pb-2">
-                {/* Leaves decoration */}
-                <div className={`absolute top-0 right-2 ${slide.leafColor} opacity-60 text-sm transform rotate-45`}>🍃</div>
-                <div className={`absolute bottom-2 left-2 ${slide.leafColor} opacity-60 text-sm transform -rotate-12`}>🍃</div>
-                
-                <img 
-                  src={slide.image} 
-                  alt={slide.title} 
-                  className="w-full h-full object-contain drop-shadow-xl"
-                />
-              </div>
-            </div>
-          </div>
-        ))}
+        {slides.map((slide) => <LegacyBanner key={slide.id} slide={slide} />)}
       </div>
       
       {/* Carousel Dots */}

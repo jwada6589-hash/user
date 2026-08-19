@@ -65,7 +65,10 @@ export const adminList = query({
   args: { adminTokenHash: v.string() },
   handler: async (ctx, { adminTokenHash }) => {
     await requireAdmin(ctx, adminTokenHash);
-    return (await ctx.db.query('orders').order('desc').collect()).map((o) => ({
+    const deliveredVisibilityCutoff = Date.now() - 8 * 24 * 60 * 60 * 1000;
+    return (await ctx.db.query('orders').order('desc').collect())
+      .filter((o) => o.status !== 'DELIVERED' || o.updatedAt > deliveredVisibilityCutoff)
+      .map((o) => ({
       id: o._id, orderNumber: o.orderNumber, customerName: o.customer.fullName, phone: o.customer.phone,
       address: o.customer.address, landmark: o.customer.landmark, createdAt: new Date(o.createdAt).toISOString(),
       items: o.items.map((i, index) => ({ id: `${o._id}-${index}`, productId: i.productId, productName: i.productName, image: i.imageUrl ?? '', options: i.selectedOptions.map((option) => `${option.name}: ${option.value}`).join('، '), quantity: i.quantity, unitPrice: i.unitPrice, total: i.lineTotal })),
@@ -83,9 +86,12 @@ export const updateStatus = mutation({
     if (order.status === 'DELIVERED' && args.status !== 'DELIVERED') throw new Error('DELIVERED_ORDER_IS_FINAL');
     const now = Date.now();
     await ctx.db.patch(order._id, { status: args.status, rejectionReason: args.status === 'REJECTED' ? args.rejectionReason : undefined, updatedAt: now });
-    if (args.status === 'DELIVERED' && !order.cashbackProcessed) {
-      const amount = Math.floor(order.total * 0.01);
+    let cashbackAdded = false;
+    let cashbackAmount = 0;
+    if (args.status === 'DELIVERED') {
       const existingTx = await ctx.db.query('walletTransactions').withIndex('by_order', (q) => q.eq('orderId', order._id)).first();
+      cashbackAmount = existingTx?.amount ?? Math.floor(order.subtotal * 0.01);
+      const amount = cashbackAmount;
       if (!existingTx && amount > 0) {
         let wallet = await ctx.db.query('wallets').withIndex('by_user', (q) => q.eq('userId', order.userId)).unique();
         if (!wallet) {
@@ -94,9 +100,22 @@ export const updateStatus = mutation({
         }
         if (!wallet) throw new Error('WALLET_NOT_FOUND');
         await ctx.db.patch(wallet._id, { balance: wallet.balance + amount, totalEarned: wallet.totalEarned + amount, updatedAt: now });
-        await ctx.db.insert('walletTransactions', { userId: order.userId, type: 'EARN', amount, orderId: order._id, description: `استرجاع نقدي 1% من الطلب #${order.orderNumber}`, createdAt: now });
+        await ctx.db.insert('walletTransactions', { userId: order.userId, type: 'EARN', amount, orderId: order._id, description: `استرجاع نقدي 1% من منتجات الطلب #${order.orderNumber}`, createdAt: now });
+        cashbackAdded = true;
       }
-      await ctx.db.patch(order._id, { cashbackProcessed: true, updatedAt: now });
+      if (!order.cashbackProcessed) await ctx.db.patch(order._id, { cashbackProcessed: true, updatedAt: now });
     }
+    return { cashbackAdded, cashbackAmount };
   },
 });
+
+export const deleteOrder = mutation({
+  args: { adminTokenHash: v.string(), orderId: v.id('orders') },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.adminTokenHash);
+    const order = await ctx.db.get(args.orderId);
+    if (!order) return;
+    await ctx.db.delete(order._id);
+  },
+});
+
