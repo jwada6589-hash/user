@@ -1,4 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Capacitor, SystemBars, SystemBarsStyle } from '@capacitor/core';
+import { App as CapacitorApp } from '@capacitor/app';
+import { Toast } from '@capacitor/toast';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import Categories from './components/Categories';
@@ -20,13 +23,66 @@ import { ArrowRight } from 'lucide-react';
 
 export default function App() {
   const [currentView, setCurrentView] = useState('home');
-  const [previousView, setPreviousView] = useState('home');
+  const currentViewRef = useRef('home');
+  const navigationHistoryRef = useRef<string[]>(['home']);
+  const lastBackPressRef = useRef(0);
   const [cartItems, setCartItems] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<any | null>(null);
   const [selectedSubCategory, setSelectedSubCategory] = useState<any | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
   
-  const { products: allProducts, categories, authState, requireAuth, setShowAuthModal, favorites, toggleFavorite: toggleFavoriteRemote } = useAppContext();
+  const { products: allProducts, categories, authState, requireAuth, setShowAuthModal, favorites, toggleFavorite: toggleFavoriteRemote, theme } = useAppContext();
+
+  useEffect(() => {
+    currentViewRef.current = currentView;
+  }, [currentView]);
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    document.documentElement.classList.add('capacitor-native');
+    let disposed = false;
+    let removeBackListener: (() => Promise<void>) | undefined;
+
+    void CapacitorApp.addListener('backButton', async () => {
+      const history = navigationHistoryRef.current;
+      if (history.length > 1 || currentViewRef.current !== 'home') {
+        if (history.length > 1) history.pop();
+        const target = history[history.length - 1] ?? 'home';
+        currentViewRef.current = target;
+        setCurrentView(target);
+        if (target === 'home') {
+          setSelectedCategory(null);
+          setSelectedSubCategory(null);
+          setSelectedProduct(null);
+        }
+        return;
+      }
+
+      const now = Date.now();
+      if (now - lastBackPressRef.current < 1800) {
+        await CapacitorApp.exitApp();
+        return;
+      }
+      lastBackPressRef.current = now;
+      await Toast.show({ text: 'اضغط رجوع مرة أخرى للخروج', duration: 'short', position: 'bottom' });
+    }).then((handle) => {
+      if (disposed) void handle.remove();
+      else removeBackListener = () => handle.remove();
+    });
+
+    return () => {
+      disposed = true;
+      document.documentElement.classList.remove('capacitor-native');
+      if (removeBackListener) void removeBackListener();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    const isDark = theme === 'dark';
+    void SystemBars.setStyle({ style: isDark ? SystemBarsStyle.Dark : SystemBarsStyle.Light });
+  }, [theme]);
 
   if (authState === 'logged_out') {
     return (
@@ -75,18 +131,26 @@ export default function App() {
 
   const clearCart = () => setCartItems([]);
 
+  const navigateTo = (view: string) => {
+    if (view === 'home') {
+      navigationHistoryRef.current = ['home'];
+    } else if (navigationHistoryRef.current[navigationHistoryRef.current.length - 1] !== view) {
+      navigationHistoryRef.current.push(view);
+    }
+    currentViewRef.current = view;
+    setCurrentView(view);
+  };
+
   const handleNavChange = (view: string) => {
     const restrictedViews = ['cart', 'orders', 'profile', 'gifts', 'favorites'];
     if (restrictedViews.includes(view)) {
       requireAuth(() => {
-        setPreviousView(currentView);
-        setCurrentView(view);
+        navigateTo(view);
       });
       return;
     }
 
-    setPreviousView(currentView);
-    setCurrentView(view);
+    navigateTo(view);
     if (view === 'home') {
       setSelectedCategory(null);
       setSelectedSubCategory(null);
@@ -95,31 +159,26 @@ export default function App() {
   };
 
   const openCategory = (id: any) => {
-    setPreviousView(currentView);
     setSelectedCategory(id);
-    setCurrentView('subcategories');
+    navigateTo('subcategories');
   };
 
   const openSubCategory = (id: any) => {
-    setPreviousView(currentView);
     setSelectedSubCategory(id);
-    setCurrentView('products');
+    navigateTo('products');
   };
 
   const openProduct = (product: any) => {
-    setPreviousView(currentView);
     setSelectedProduct(product);
-    setCurrentView('productDetails');
+    navigateTo('productDetails');
   };
 
   const goBack = () => {
-    if (currentView === 'productDetails') {
-      setCurrentView(previousView);
-    } else if (currentView === 'products') {
-      setCurrentView('subcategories');
-    } else if (currentView === 'subcategories') {
-      setCurrentView('home');
-    }
+    const history = navigationHistoryRef.current;
+    if (history.length > 1) history.pop();
+    const target = history[history.length - 1] ?? 'home';
+    currentViewRef.current = target;
+    setCurrentView(target);
   };
 
   return (

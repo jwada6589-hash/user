@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { Bell, Menu, Search, MessageCircle, X } from 'lucide-react';
 import { useAppContext } from '../shared/context/AppContext';
+import { Capacitor } from '@capacitor/core';
+import { AppLauncher } from '@capacitor/app-launcher';
 
 export default function Header({ onMenuClick, onProductClick }: any) {
   const { products, settings } = useAppContext();
@@ -11,11 +13,24 @@ export default function Header({ onMenuClick, onProductClick }: any) {
   
   const searchRef = useRef<HTMLDivElement>(null);
 
-  const handleWhatsAppClick = () => {
+  const handleWhatsAppClick = async () => {
     if (!whatsappEnabled) return;
-    const cleanNumber = whatsappNumber.replace(/[^0-9+]/g, '');
+    const cleanNumber = whatsappNumber.replace(/\D/g, '');
     const encodedMessage = encodeURIComponent(whatsappDefaultMessage);
-    window.open(`https://wa.me/${cleanNumber}?text=${encodedMessage}`, '_blank');
+    const nativeUrl = `whatsapp://send?phone=${cleanNumber}&text=${encodedMessage}`;
+    const webUrl = `https://wa.me/${cleanNumber}?text=${encodedMessage}`;
+
+    if (!Capacitor.isNativePlatform()) {
+      window.open(webUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    try {
+      const { value: whatsappInstalled } = await AppLauncher.canOpenUrl({ url: nativeUrl });
+      await AppLauncher.openUrl({ url: whatsappInstalled ? nativeUrl : webUrl });
+    } catch {
+      await AppLauncher.openUrl({ url: webUrl });
+    }
   };
 
   useEffect(() => {

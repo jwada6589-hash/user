@@ -58,7 +58,7 @@ export default function BottomNav({ currentView, onViewChange, cartCount }: any)
       `}</style>
       
       {/* Floating Pill Navigation */}
-      <div className="fixed bottom-5 left-1/2 -translate-x-1/2 w-max bg-white/95 dark:bg-gray-800/95 backdrop-blur-md px-4 py-2 flex justify-center items-center gap-1 z-50 shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-gray-100 dark:border-gray-700 rounded-full transition-colors">
+      <div className="fixed bottom-[calc(1.25rem+var(--safe-area-inset-bottom,env(safe-area-inset-bottom,0px)))] left-1/2 -translate-x-1/2 w-max bg-white/95 dark:bg-gray-800/95 backdrop-blur-md px-4 py-2 flex justify-center items-center gap-1 z-50 shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-gray-100 dark:border-gray-700 rounded-full transition-colors">
         <NavItem id="cart" icon={ShoppingCart} label="السلة" badge={cartCount} />
         <NavItem id="offers" icon={Tag} label="العروض" />
         <NavItem id="home" icon={Home} label="الرئيسية" />

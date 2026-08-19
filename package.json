@@ -5,6 +5,12 @@
   "scripts": {
     "dev": "npm run dev --workspace=user-app",
     "build": "npm run build --workspace=user-app",
+    "build:user": "npm run build --workspace=user-app",
+    "build:android:web": "npm run build:android --workspace=user-app",
+    "cap:sync": "npm run cap:sync --workspace=user-app",
+    "cap:android": "npm run cap:android --workspace=user-app",
+    "android:open": "npm run android:open --workspace=user-app",
+    "android:build": "npm run android:build --workspace=user-app",
     "preview": "npm run preview --workspace=user-app",
     "convex:dev": "convex dev",
     "convex:deploy": "convex dev --once"
