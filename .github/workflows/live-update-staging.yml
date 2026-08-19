@@ -16,6 +16,11 @@ on:
         description: Optional visible marker for a temporary USB-device OTA test
         required: false
         type: string
+      rollback_test:
+        description: Publish an intentionally non-starting bundle to verify automatic rollback
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -47,6 +52,13 @@ jobs:
         env:
           VITE_CONVEX_URL: https://fiery-dachshund-744.convex.cloud
           VITE_OTA_TEST_MARKER: ${{ inputs.test_marker }}
+
+      - name: Simulate a startup failure for the explicit rollback test
+        if: ${{ inputs.rollback_test }}
+        shell: bash
+        run: |
+          rm -rf user-app/dist/assets
+          printf '%s\n' '<!doctype html><html><body><script>throw new Error("Capgo rollback test")</script></body></html>' > user-app/dist/index.html
 
       - name: Upload only to staging
         run: >-
