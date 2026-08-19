@@ -73,8 +73,10 @@ jobs:
           --node-modules node_modules
           --fail-on-incompatible
           --delta
+          $ROLLBACK_TEST_FLAG
         env:
           CAPGO_API_KEY: ${{ secrets.CAPGO_API_KEY }}
+          ROLLBACK_TEST_FLAG: ${{ inputs.rollback_test && '--no-code-check' || '' }}
 
       - name: Lock staging to compatible Android development devices
         run: >-
