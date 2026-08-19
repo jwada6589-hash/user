@@ -30,7 +30,7 @@ jobs:
     environment: staging
     env:
       CAPGO_APP_ID: com.almurtada.market
-      BUNDLE_VERSION: 1.0.0-staging.${{ github.run_number }}.${{ github.run_attempt }}
+      BUNDLE_VERSION: 1.0.1-staging.${{ github.run_number }}.${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@v4
 
