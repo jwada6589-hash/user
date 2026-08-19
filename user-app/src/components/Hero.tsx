@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useQuery } from 'convex/react';
+import { api } from '../../../convex/_generated/api';
 
 const slides = [
   {
@@ -61,13 +63,50 @@ const slides = [
 
 export default function Hero() {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const managedBanners = useQuery(api.banners.active);
+  const uploadedBanners = managedBanners?.filter((banner) => banner.imageUrl) ?? [];
+  const slideCount = uploadedBanners.length || slides.length;
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % slides.length);
+      setCurrentIndex((prev) => (prev + 1) % slideCount);
     }, 4000);
     return () => clearInterval(timer);
-  }, []);
+  }, [slideCount]);
+
+  useEffect(() => {
+    setCurrentIndex((index) => Math.min(index, slideCount - 1));
+  }, [slideCount]);
+
+  if (uploadedBanners.length > 0) {
+    return (
+      <div className="mx-4 mt-5 relative rounded-[1.5rem] overflow-hidden shadow-sm aspect-[2.35/1] bg-gray-100">
+        <div
+          className="flex w-full h-full transition-transform duration-700 ease-in-out"
+          style={{ transform: `translateX(${currentIndex * 100}%)` }}
+        >
+          {uploadedBanners.map((banner, index) => (
+            <div key={banner.id} className="min-w-full h-full">
+              <img src={banner.imageUrl!} alt={`بنر ${index + 1}`} className="w-full h-full object-cover" />
+            </div>
+          ))}
+        </div>
+        {uploadedBanners.length > 1 && (
+          <div className="absolute bottom-2.5 left-0 right-0 flex justify-center gap-1.5 z-10">
+            {uploadedBanners.map((banner, index) => (
+              <button
+                type="button"
+                aria-label={`عرض البنر ${index + 1}`}
+                key={banner.id}
+                onClick={() => setCurrentIndex(index)}
+                className={`h-1.5 rounded-full transition-all duration-300 ${index === currentIndex ? 'w-4 bg-white' : 'w-1.5 bg-white/50'}`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="mx-4 mt-5 relative rounded-[1.5rem] overflow-hidden shadow-sm aspect-[2.35/1]">
