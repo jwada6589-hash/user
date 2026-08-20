@@ -125,7 +125,7 @@ export default function Header({ onMenuClick, onProductClick }: any) {
                   }}
                   className="flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-xl cursor-pointer transition-colors"
                 >
-                  <img src={product.image} alt={product.name} className="w-12 h-12 rounded-lg object-cover bg-gray-100" />
+                  <img src={product.image} alt={product.name} loading="lazy" decoding="async" className="w-12 h-12 rounded-lg object-cover bg-gray-100" />
                   <div className="flex-1 min-w-0">
                     <h4 className="font-bold text-gray-900 dark:text-white text-sm truncate">{product.name}</h4>
                     <p className="text-[#055C33] dark:text-[#2DD4BF] font-black text-sm">{product.price} د.ع</p>

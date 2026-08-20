@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useAction, useMutation, useQuery } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
+import { usePersistentRealtimeValue } from '../usePersistentRealtimeValue';
 
 export interface UserProfile { fullName: string; phone: string; address: string; landmark: string; notes: string }
 export type AuthState = 'guest' | 'authenticated' | 'logged_out';
@@ -21,6 +22,7 @@ interface AppContextType {
 }
 
 const emptyProfile: UserProfile = { fullName: '', phone: '', address: '', landmark: '', notes: '' };
+const emptyList: any[] = [];
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -33,9 +35,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem('appTheme') as 'light' | 'dark') || 'light');
   const [showAuthModal, setShowAuthModal] = useState(false);
 
-  const products = useQuery(api.catalog.products, {}) ?? [];
-  const categories = useQuery(api.catalog.categories, {}) ?? [];
-  const subCategories = useQuery(api.catalog.subcategories, {}) ?? [];
+  const liveProducts = useQuery(api.catalog.products, {});
+  const liveCategories = useQuery(api.catalog.categories, {});
+  const liveSubCategories = useQuery(api.catalog.subcategories, {});
+  const products = usePersistentRealtimeValue('products', liveProducts, emptyList);
+  const categories = usePersistentRealtimeValue('categories', liveCategories, emptyList);
+  const subCategories = usePersistentRealtimeValue('subcategories', liveSubCategories, emptyList);
   const settings = useQuery(api.settings.get, {});
   const sessionIsValid = useQuery(api.users.sessionStatus, tokenHash ? { tokenHash } : 'skip');
   const protectedArgs = tokenHash && sessionIsValid === true ? { tokenHash } : 'skip';

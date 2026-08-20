@@ -78,13 +78,14 @@ jobs:
           CAPGO_API_KEY: ${{ secrets.CAPGO_API_KEY }}
           ROLLBACK_TEST_FLAG: ${{ inputs.rollback_test && '--no-code-check' || '' }}
 
-      - name: Lock staging to compatible Android development devices
+      - name: Lock staging to compatible Android release test devices
         run: >-
           npx @capgo/cli@latest channel set staging "$CAPGO_APP_ID"
           --apikey "$CAPGO_API_KEY"
           --android
           --device
-          --dev
+          --prod
+          --no-dev
           --self-assign
           --no-downgrade
           --disable-auto-update major

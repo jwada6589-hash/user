@@ -208,7 +208,7 @@ export default function CartView({ items, updateQuantity, onViewChange, clearCar
               return (
               <div key={index} className="bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-sm border border-gray-100 dark:border-gray-700 flex gap-3 items-center">
                 <div className="w-20 h-20 bg-gray-50 dark:bg-gray-700 rounded-xl p-2 flex-shrink-0">
-                  <img src={item.image} alt={item.name} className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal" />
+                  <img src={item.image} alt={item.name} loading="lazy" decoding="async" className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal" />
                 </div>
                 
                 <div className="flex-1">

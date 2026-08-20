@@ -92,7 +92,7 @@ export default function GiftsView({ onViewChange }: { onViewChange: (view: strin
                 <div key={gift.id} className="bg-white dark:bg-gray-800 rounded-3xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col gap-3">
                   <div className="flex gap-4">
                     <div className="w-24 h-24 bg-gray-50 dark:bg-gray-700 rounded-2xl p-2 flex-shrink-0 flex items-center justify-center">
-                      <img src={gift.image} alt={gift.name} className="w-full h-full object-contain drop-shadow-sm mix-blend-multiply dark:mix-blend-normal" />
+                      <img src={gift.image} alt={gift.name} loading="lazy" decoding="async" className="w-full h-full object-contain drop-shadow-sm mix-blend-multiply dark:mix-blend-normal" />
                     </div>
                     <div className="flex-1 flex flex-col justify-center">
                       <h3 className="font-bold text-gray-900 dark:text-white text-base mb-1 leading-tight">{gift.name}</h3>

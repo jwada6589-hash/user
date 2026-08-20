@@ -75,6 +75,8 @@ export default function Products({ selectedSubCategory, onAddToCart, onProductCl
               <img 
                 src={product.image} 
                 alt={product.name} 
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover mix-blend-multiply dark:mix-blend-normal"
               />
             </div>

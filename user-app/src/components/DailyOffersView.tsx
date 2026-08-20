@@ -40,6 +40,8 @@ export default function DailyOffersView({ onAddToCart, onProductClick }: any) {
                   <img 
                     src={product.image} 
                     alt={product.name} 
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover mix-blend-multiply dark:mix-blend-normal"
                   />
                   <div className="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-bl-xl z-10">

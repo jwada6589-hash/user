@@ -127,7 +127,13 @@ export default function Hero() {
               <LegacyBanner key={banner.id} slide={legacySlide} />
             ) : (
               <div key={banner.id} className="min-w-full h-full">
-                <img src={banner.imageUrl!} alt={`بنر ${index + 1}`} className="w-full h-full object-cover" />
+                <img
+                  src={banner.imageUrl!}
+                  alt={`بنر ${index + 1}`}
+                  loading={index === 0 ? 'eager' : 'lazy'}
+                  decoding="async"
+                  className="w-full h-full object-cover"
+                />
               </div>
             );
           })}

@@ -45,7 +45,7 @@ export default function FavoritesView({
               className="w-full aspect-square bg-gray-50 dark:bg-gray-700 rounded-xl mb-3 flex items-center justify-center cursor-pointer overflow-hidden relative"
               onClick={() => onProductClick(product)}
             >
-              <img src={product.image} alt={product.name} className="w-3/4 h-3/4 object-contain group-hover:scale-110 transition-transform duration-300" />
+              <img src={product.image} alt={product.name} loading="lazy" decoding="async" className="w-3/4 h-3/4 object-contain group-hover:scale-110 transition-transform duration-300" />
             </div>
 
             <div className="flex-1 flex flex-col justify-between" onClick={() => onProductClick(product)}>

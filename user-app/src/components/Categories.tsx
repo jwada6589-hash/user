@@ -29,6 +29,8 @@ export default function Categories({ onSelectCategory, onOpenFavorites }: any) {
               <img 
                 src={cat.image} 
                 alt={cat.name} 
+                loading="lazy"
+                decoding="async"
                 className="w-[5.25rem] h-[5.25rem] rounded-full object-cover z-10 shadow-sm"
               />
             </div>
