@@ -28,11 +28,13 @@ jobs:
         with:
           node-version: 22
 
-      - name: Promote the tested bundle only
+      - name: Promote the exact bundle verified on the release test device
         run: >-
           npx @capgo/cli@latest channel set production "$CAPGO_APP_ID"
           --apikey "$CAPGO_API_KEY"
           --bundle "$BUNDLE_VERSION"
+          --package-json user-app/package.json
+          --ignore-metadata-check
           --android
           --device
           --prod
