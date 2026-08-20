@@ -129,9 +129,6 @@ export default function ProfileView({ onViewChange }: { onViewChange: (view: str
             </div>
             <div className="flex-1 overflow-y-auto p-5">
               <div className="prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed space-y-4">
-                <p className="font-bold text-rose-500 mb-6 bg-rose-50 dark:bg-rose-900/20 p-3 rounded-xl border border-rose-100 dark:border-rose-900/30">
-                  ملاحظة: هذا النص هو نص تجريبي (Placeholder) مؤقت، سيتم استبداله لاحقاً بالنص القانوني النهائي قبل النشر.
-                </p>
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white mt-4">1. مقدمة</h3>
                 <p>نحن نقدر خصوصيتك ونلتزم بحماية بياناتك الشخصية...</p>
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white mt-4">2. جمع البيانات</h3>
