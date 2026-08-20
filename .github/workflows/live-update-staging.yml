@@ -50,7 +50,7 @@ jobs:
       - name: Build user web bundle
         run: npm run build:android:web
         env:
-          VITE_CONVEX_URL: https://fiery-dachshund-744.convex.cloud
+          VITE_CONVEX_URL: https://hushed-zebra-824.convex.cloud
           VITE_OTA_TEST_MARKER: ${{ inputs.test_marker }}
 
       - name: Simulate a startup failure for the explicit rollback test

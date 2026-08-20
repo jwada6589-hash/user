@@ -3,7 +3,7 @@
 تطبيق المستخدم المستقل، متصل بقاعدة Convex السحابية نفسها التي تستخدمها لوحة الإدارة.
 
 - Convex Project: `al-murtada-market`
-- Deployment: `fiery-dachshund-744`
+- Deployment: `hushed-zebra-824` (Production)
 - الرابط العام: `https://jwada6589-hash.github.io/user/`
 
 ## التشغيل المحلي
